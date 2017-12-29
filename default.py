@@ -125,8 +125,15 @@ def SEARCH(url):
             searchurl = url + searchText
             searchurl = searchurl.encode('utf-8')
             #print 'SEARCHING:' + searchurl
-            INDEXPAGES(searchurl)
-
+            req = urllib2.Request(searchurl)
+            req.add_header('User-Agent', UA)
+            response = urllib2.urlopen(req)
+            #print 'request page url:' + url
+            data=response.read()
+            response.close()
+            match = re.compile('<a href="(.+?)" data-url="" class="ml-mask jt" data-hasqtip="\d+" oldtitle="(.+?)" title="">.*\n.*\n<img data-original="(.+?) "').findall(data)
+            for vid,title,thumbnail in match:
+             addLink(title,vid,5,thumbnail)
 
         else:
              addDir('Върнете се назад в главното меню за да продължите','','',"DefaultFolderBack.png")
