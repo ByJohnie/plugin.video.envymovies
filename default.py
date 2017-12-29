@@ -145,7 +145,7 @@ def SHOW(url):
        response = urllib2.urlopen(req)
        data=response.read()
        response.close()
-       match = re.compile('<iframe.src="about:blank" data-lazy-src="(.+?)".frameborder=".".allowfullscreen></iframe>').findall(data)
+       match = re.compile('class="movieplay"><iframe.src="about:blank" data-lazy-src="(.+?)".frameborder=".".allowfullscreen></iframe>').findall(data)
        for link in match:
         matchi = re.compile('itemprop="thumbnailUrl" conTent="(.+?)"><').findall(data)
         for thumbnail in matchi:
