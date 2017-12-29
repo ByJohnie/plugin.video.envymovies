@@ -1,0 +1,4 @@
+1.0.2
+fixed search
+1.0.1
+fixed pagination
