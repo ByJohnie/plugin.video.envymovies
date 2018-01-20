@@ -57,7 +57,7 @@ def INDEXPAGES(url):
 
         #Начало на обхождането
         br = 0 #Брояч на видеата в страницата - 24 за този сайт
-        match = re.compile('div data-movie-id=".+?".title="(.+?).+?href="(https.+?)".+?src="(.+?)"').findall(data)
+        match = re.compile('div data-movie-id=".+?".title="(.+?)".+?href="(https.+?)".+?src="(.+?)"').findall(data)
         for title,vid,thumbnail in match:
             #print thumbnail
             #print title
@@ -86,8 +86,8 @@ def INDEXSERIALS(url):
 
         #Начало на обхождането
         br = 0 #Брояч на видеата в страницата - 24 за този сайт
-        match = re.compile('<div data-movie-id=".+?" class="ml-item"> <a href="(.+?)" data-url="" class="ml-mask jt" data-hasqtip="\d+" oldtitle="(.+?)" title=""> <span class="mli-quality">HD</span><img data-original="(.+?)."').findall(data)
-        for vid,title,thumbnail in match:
+        match = re.compile('</h2></div>.<a href="(.+?)".+?src="(.+?)".title="(.+?)"').findall(data)
+        for vid,thumbnail,title in match:
             #print thumbnail
             #print title
             addLink(title,vid,4,thumbnail)
@@ -103,15 +103,12 @@ def INDEXSERIES(url):
 
         #Начало на обхождането
         br = 0 #Брояч на видеата в страницата - 24 за този сайт
-        match = re.compile('<a href=".+?episode/(.+?)" target=".+?">(.+?)</a>').findall(data)
-        for link,title, in match:
-         matchi = re.compile('image:url.(.+?).">').findall(data)
-         for thumbnail in matchi:
-          url = 'https://envymovies.com/' + 'episode/' + link
-           #title = str(title2 + title1)
+        match = re.compile('url.(https.+?jpg).".href="(.+?)".+?</i>(.+?)</span>').findall(data)
+        for thumbnail,url,title, in match:
+         title = name + '  ' + title
             #print thumbnail
             #print title
-          addLink(title,url,6,thumbnail)
+         addLink(title,url,6,thumbnail)
         br = br + 1
 
 #Търсачка
@@ -131,25 +128,24 @@ def SEARCH(url):
             #print 'request page url:' + url
             data=response.read()
             response.close()
-            match = re.compile('<a href="(.+?)" data-url="" class="ml-mask jt" data-hasqtip="\d+" oldtitle="(.+?)" title="">.*\n.*\n<img data-original="(.+?) "').findall(data)
-            for vid,title,thumbnail in match:
+            match = re.compile('href="(.+?)".*\n.*src="(.+?)" title="(.+?)"').findall(data)
+            for vid,thumbnail,title in match:
              addLink(title,vid,5,thumbnail)
 
         else:
              addDir('Върнете се назад в главното меню за да продължите','','',"DefaultFolderBack.png")
 
 def SHOW(url):
-       url1 = url
        req = urllib2.Request(url)
        req.add_header('User-Agent', UA)
        response = urllib2.urlopen(req)
        data=response.read()
        response.close()
-       match = re.compile('class="movieplay"><iframe.src="about:blank" data-lazy-src="(.+?)".frameborder=".".allowfullscreen></iframe>').findall(data)
+       match = re.compile('class="movieplay"><iframe.src="about:blank" data-lazy-src="(.+?)" width="100%".+?</iframe>').findall(data)
        for link in match:
-        matchi = re.compile('itemprop="thumbnailUrl" conTent="(.+?)"><').findall(data)
+        matchi = re.compile('style="background-image:.+?(https:.+?.jpg)').findall(data)
         for thumbnail in matchi:
-         matchd = re.compile('<p class="f-desc">(.+?)</p>').findall(data)
+         matchd = re.compile('class="film-desc"><p class="f-desc.+?>(.+?)</p>').findall(data)
          for desc in matchd:
           addLink2(name,link,7,desc,thumbnail)
 
@@ -160,11 +156,11 @@ def SHOWSERIAL(url):
        response = urllib2.urlopen(req)
        data=response.read()
        response.close()
-       match = re.compile('<iframe.src="about:blank" data-lazy-src="(.+?)"').findall(data)
+       match = re.compile('class="movieplay"> <iframe.src="about:blank" data-lazy-src="(.+?)" width="100%"').findall(data)
        for link in match:
-        matchi = re.compile('style="background-image: url.(.+?)."></a><div id="seasons"><').findall(data)
+        matchi = re.compile('meta property="og:image" content="(.+?)"').findall(data)
         for thumbnail in matchi:
-         matchd = re.compile('<p class="f-desc">(.+?)</p>').findall(data)
+         matchd = re.compile('class="film-desc"><p class="f-desc.+?>(.+?)</p>').findall(data)
          for desc in matchd:
           addLink2(name,link,7,desc,thumbnail)
 
