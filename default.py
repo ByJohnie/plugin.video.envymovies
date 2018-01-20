@@ -57,8 +57,8 @@ def INDEXPAGES(url):
 
         #Начало на обхождането
         br = 0 #Брояч на видеата в страницата - 24 за този сайт
-        match = re.compile('<div data-movie-id=".+?" class="ml-item"> <a href="(.+?)" data-url="" class="ml-mask jt" data-hasqtip="112" oldtitle="(.+?)" title=""> <span class="mli-quality">\w+</span><img data-original="(.+?) "').findall(data)
-        for vid,title,thumbnail in match:
+        match = re.compile('div data-movie-id=".+?".title="(.+?).+?href="(https.+?)".+?src="(.+?)"').findall(data)
+        for title,vid,thumbnail in match:
             #print thumbnail
             #print title
             addLink(title,vid,5,thumbnail)
