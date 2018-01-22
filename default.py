@@ -64,7 +64,7 @@ def INDEXPAGES(url):
             addLink(title,vid,5,thumbnail)
             br = br + 1
             print 'Items counter: ' + str(br)
-        if br == 40: #тогава имаме следваща страница и конструираме нейния адрес
+        if br >= 40: #тогава имаме следваща страница и конструираме нейния адрес
             getpage=re.compile('class=..>(.+?)</a>.*href=.(https.+?)/page/./.>').findall(data)
             for page,baseurl in getpage:
                 newpage = int(page)
