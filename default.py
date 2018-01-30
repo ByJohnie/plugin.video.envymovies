@@ -141,7 +141,7 @@ def SHOW(url):
        response = urllib2.urlopen(req)
        data=response.read()
        response.close()
-       match = re.compile('class="movieplay"> <iframe.src="about:blank" data-lazy-src="(.+?)" width="100%"').findall(data)
+       match = re.compile('class="movieplay">.+?data-lazy-src="(.+?)" width="100%"').findall(data)
        for link in match:
         matchi = re.compile('style="background-image:.+?(https:.+?.jpg)').findall(data)
         for thumbnail in matchi:
@@ -156,7 +156,7 @@ def SHOWSERIAL(url):
        response = urllib2.urlopen(req)
        data=response.read()
        response.close()
-       match = re.compile('class="movieplay"><iframe.src="about:blank" data-lazy-src="(.+?)" width="100%"').findall(data)
+       match = re.compile('class="movieplay">.+?data-lazy-src="(.+?)" width="100%"').findall(data)
        for link in match:
         matchi = re.compile('meta property="og:image" content="(.+?)"').findall(data)
         for thumbnail in matchi:
