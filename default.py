@@ -210,6 +210,8 @@ def PLAYOL(url):
          jsonrsp = json.loads(data)
          status = jsonrsp['status']
          msg = jsonrsp['msg']
+         if status == 404:
+          xbmc.executebuiltin((u'Notification(%s,%s,%s,%s)' % (status, msg, '5000', __icon__)).encode('utf-8'))
          if status == 403:
           xbmc.executebuiltin((u'Notification(%s,%s,%s,%s)' % (status, msg, '5000', __icon__)).encode('utf-8'))
          if status == 200:
