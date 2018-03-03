@@ -9,9 +9,11 @@ import xbmc, xbmcplugin,xbmcgui,xbmcaddon
 import urlresolver
 import urlparse
 import json
+import time
 #Място за дефиниране на константи, които ще се използват няколкократно из отделните модули
 __addon_id__= 'plugin.video.envymovies'
 __Addon = xbmcaddon.Addon(__addon_id__)
+__icon__ =  xbmc.translatePath(__Addon.getAddonInfo('path') + "/resources/icon.png")
 searchicon = xbmc.translatePath(__Addon.getAddonInfo('path') + "/resources/search.png")
 folder = xbmc.translatePath(__Addon.getAddonInfo('path') + "/resources/folder.png")
 series = xbmc.translatePath(__Addon.getAddonInfo('path') + "/resources/series.png")
@@ -23,6 +25,7 @@ UA = 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:40.0) Gecko/20100101 Firefox/40
 #Меню с директории в приставката
 def CATEGORIES():
         addDir('Търсене на видео','https://envymovies.com/?s=',2,searchicon)
+        addDir('Случаен филм','https://envymovies.com/?redirect_to=random',1,folder)
         addDir('Всички филми','https://envymovies.com/movies/',1,folder)
         addDir('Сериали','https://envymovies.com/series/',3,series)
         addDir('Анимация','https://envymovies.com/genre/animation/',1,folder)
@@ -205,14 +208,27 @@ def PLAYOL(url):
          response.close()
          #print data
          jsonrsp = json.loads(data)
-         path = jsonrsp['result']['url'].replace('?mime=true','')
-         li = xbmcgui.ListItem(iconImage=iconimage, thumbnailImage=iconimage, path=path)
-         li.setInfo('video', { 'title': name })
-         xbmcplugin.setResolvedUrl(handle=int(sys.argv[1]), succeeded=True, listitem=li)
-         try:
+         status = jsonrsp['status']
+         msg = jsonrsp['msg']
+         if status == 403:
+          xbmc.executebuiltin((u'Notification(%s,%s,%s,%s)' % (status, msg, '5000', __icon__)).encode('utf-8'))
+         if status == 200:
+          path = jsonrsp['result']['url'].replace('?mime=true','')
+          li = xbmcgui.ListItem(iconImage=iconimage, thumbnailImage=iconimage, path=path)
+          li.setInfo('video', { 'title': name })
+          xbmcplugin.setResolvedUrl(handle=int(sys.argv[1]), succeeded=True, listitem=li)
+          try:
            xbmc.Player().play(path, li)
-         except:
+          except:
            xbmc.executebuiltin("Notification('Грешка','Видеото липсва на сървъра!')")
+
+def RANDOMMOVIE(url):
+       req = urllib2.Request(url)
+       req.add_header('User-Agent', UA)
+       response = urllib2.urlopen(req)
+       data=response.read()
+       response.close()
+       SHOW(response.geturl())
 
 
 #Модул за добавяне на отделно заглавие и неговите атрибути към съдържанието на показваната в Kodi директория - НЯМА НУЖДА ДА ПРОМЕНЯТЕ НИЩО ТУК
@@ -331,5 +347,9 @@ elif mode==7:
 elif mode==8:
         print ""+url
         PLAYOL(url)
+
+elif mode==9:
+        print ""+url
+        RANDOMMOVIE(url)
 
 xbmcplugin.endOfDirectory(int(sys.argv[1]))
