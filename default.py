@@ -8,6 +8,7 @@ import urllib2
 import xbmc, xbmcplugin,xbmcgui,xbmcaddon
 import urlresolver
 import urlparse
+import json
 #Място за дефиниране на константи, които ще се използват няколкократно из отделните модули
 __addon_id__= 'plugin.video.envymovies'
 __Addon = xbmcaddon.Addon(__addon_id__)
@@ -63,7 +64,7 @@ def INDEXPAGES(url):
             #print title
             addLink(title,vid,5,thumbnail)
             br = br + 1
-            print 'Items counter: ' + str(br)
+            #print 'Items counter: ' + str(br)
         if br >= 40: #тогава имаме следваща страница и конструираме нейния адрес
             getpage=re.compile('class=..>(.+?)</a>.*href=.(https.+?)/page/./.>').findall(data)
             for page,baseurl in getpage:
@@ -141,13 +142,20 @@ def SHOW(url):
        response = urllib2.urlopen(req)
        data=response.read()
        response.close()
-       match = re.compile('class="movieplay">.+?data-lazy-src="(.+?)" width="100%"').findall(data)
+       match = re.compile('class="movieplay">.+?data-lazy-src="(.+?embed/.+?/).+?" width="100%"').findall(data)
        for link in match:
         matchi = re.compile('style="background-image:.+?(https:.+?.jpg)').findall(data)
         for thumbnail in matchi:
-         matchd = re.compile('class="film-desc"><p class="f-desc.+?>(.+?)</p>').findall(data)
-         for desc in matchd:
-          addLink2(name,link,7,desc,thumbnail)
+         try:
+          matchd = re.compile('class="film-desc.+?<p class="f-desc.+?>(.+?)</p>').findall(data)
+          for description in matchd:
+           desc = description       
+         except:
+           desc = 'не могах да намеря описание'
+         if 'openload' in link:
+           addLink2(name,link,8,desc,thumbnail)
+         if not 'openload' in link:
+           addLink2(name,link,7,desc,thumbnail)
 
 def SHOWSERIAL(url):
        url1 = url
@@ -160,7 +168,7 @@ def SHOWSERIAL(url):
        for link in match:
         matchi = re.compile('meta property="og:image" content="(.+?)"').findall(data)
         for thumbnail in matchi:
-         matchd = re.compile('class="film-desc"><p class="f-desc.+?>(.+?)</p>').findall(data)
+         matchd = re.compile('class="film-desc.+?<p class="f-desc.+?>(.+?)</p>').findall(data)
          for desc in matchd:
           addLink2(name,link,7,desc,thumbnail)
 
@@ -185,7 +193,26 @@ def PLAY(url):
         try: _addon.resolve_url(stream_url)
         except: t=''
 
-
+def PLAYOL(url):
+        match = re.compile('https.+?embed/(.+?)/').findall(url)
+        for  link in match:
+         link = 'https://api.openload.co/1/streaming/get?file=' + link
+         req = urllib2.Request(link)
+         req.add_header('User-Agent', UA)
+         response = urllib2.urlopen(req)
+         #print 'request page url:' + url
+         data=response.read()
+         response.close()
+         #print data
+         jsonrsp = json.loads(data)
+         path = jsonrsp['result']['url'].replace('?mime=true','')
+         li = xbmcgui.ListItem(iconImage=iconimage, thumbnailImage=iconimage, path=path)
+         li.setInfo('video', { 'title': name })
+         xbmcplugin.setResolvedUrl(handle=int(sys.argv[1]), succeeded=True, listitem=li)
+         try:
+           xbmc.Player().play(path, li)
+         except:
+           xbmc.executebuiltin("Notification('Грешка','Видеото липсва на сървъра!')")
 
 
 #Модул за добавяне на отделно заглавие и неговите атрибути към съдържанието на показваната в Kodi директория - НЯМА НУЖДА ДА ПРОМЕНЯТЕ НИЩО ТУК
@@ -300,5 +327,9 @@ elif mode==6:
 elif mode==7:
         print ""+url
         PLAY(url)
+
+elif mode==8:
+        print ""+url
+        PLAYOL(url)
 
 xbmcplugin.endOfDirectory(int(sys.argv[1]))
