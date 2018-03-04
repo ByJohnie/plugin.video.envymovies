@@ -145,7 +145,7 @@ def SHOW(url):
        response = urllib2.urlopen(req)
        data=response.read()
        response.close()
-       match = re.compile('class="movieplay">.+?data-lazy-src="(.+?embed/.+?/).+?" width="100%"').findall(data)
+       match = re.compile('class="movieplay">.+?data-lazy-src="(.+?embed/.+?)" width="100%"').findall(data)
        for link in match:
         matchi = re.compile('style="background-image:.+?(https:.+?.jpg)').findall(data)
         for thumbnail in matchi:
@@ -153,7 +153,7 @@ def SHOW(url):
          matchd = re.compile('class="film-desc.+?<p class="f-desc.+?>(.+?)</p>').findall(data)
          for description in matchd:
            desc = description       
-           desc = desc + 'не могах да намеря описание'
+           desc = desc + 'не можах да намеря описание'
          if 'openload' in link:
            addLink2(name,link,8,desc,thumbnail)
          if not 'openload' in link:
