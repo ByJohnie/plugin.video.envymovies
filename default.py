@@ -149,12 +149,11 @@ def SHOW(url):
        for link in match:
         matchi = re.compile('style="background-image:.+?(https:.+?.jpg)').findall(data)
         for thumbnail in matchi:
-         try:
-          matchd = re.compile('class="film-desc.+?<p class="f-desc.+?>(.+?)</p>').findall(data)
-          for description in matchd:
+         desc = ''
+         matchd = re.compile('class="film-desc.+?<p class="f-desc.+?>(.+?)</p>').findall(data)
+         for description in matchd:
            desc = description       
-         except:
-           desc = 'не могах да намеря описание'
+           desc = desc + 'не могах да намеря описание'
          if 'openload' in link:
            addLink2(name,link,8,desc,thumbnail)
          if not 'openload' in link:
@@ -173,7 +172,10 @@ def SHOWSERIAL(url):
         for thumbnail in matchi:
          matchd = re.compile('class="film-desc.+?<p class="f-desc.+?>(.+?)</p>').findall(data)
          for desc in matchd:
-          addLink2(name,link,7,desc,thumbnail)
+          if 'openload' in link:
+           addLink2(name,link,8,desc,thumbnail)
+          if not 'openload' in link:
+           addLink2(name,link,7,desc,thumbnail)
 
 #Зареждане на видео
 def PLAY(url):
