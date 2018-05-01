@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<settings>
+	<!-- User Entries -->
+	<category label="1000">
+        <setting id="sep1" label="1000" type="lsep"/>
+        <setting label="104" type="bool" id="subsoload" default="false"/>
+    </category>
+</settings>
