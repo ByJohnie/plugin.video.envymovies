@@ -1,3 +1,7 @@
+1.1.1
+fuck subsuncas
+От меню настройки, opensubs=true
+за да се търсят субтитро в openload
 1.1.0
 Оправени графа сериали през OPENLOAD
 1.0.9
