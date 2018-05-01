@@ -6,10 +6,12 @@ import os
 import urllib
 import urllib2
 import xbmc, xbmcplugin,xbmcgui,xbmcaddon
-import urlresolver
+
 import urlparse
 import json
 import time
+import xbmcvfs
+
 #Място за дефиниране на константи, които ще се използват няколкократно из отделните модули
 __addon_id__= 'plugin.video.envymovies'
 __Addon = xbmcaddon.Addon(__addon_id__)
@@ -17,7 +19,8 @@ __icon__ =  xbmc.translatePath(__Addon.getAddonInfo('path') + "/resources/icon.p
 searchicon = xbmc.translatePath(__Addon.getAddonInfo('path') + "/resources/search.png")
 folder = xbmc.translatePath(__Addon.getAddonInfo('path') + "/resources/folder.png")
 series = xbmc.translatePath(__Addon.getAddonInfo('path') + "/resources/series.png")
-
+subsoload = xbmcaddon.Addon().getSetting('subsoload')
+srtsubs_path = xbmc.translatePath('special://temp/envy/subs.srt')
 MUA = 'Mozilla/5.0 (Linux; Android 5.0.2; bg-bg; SAMSUNG GT-I9195 Build/JDQ39) AppleWebKit/535.19 (KHTML, like Gecko) Version/1.0 Chrome/18.0.1025.308 Mobile Safari/535.19' #За симулиране на заявка от мобилно устройство
 UA = 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:40.0) Gecko/20100101 Firefox/40.0' #За симулиране на заявка от  компютърен браузър
 
@@ -153,7 +156,6 @@ def SHOW(url):
          matchd = re.compile('class="film-desc.+?<p class="f-desc.+?>(.+?)</p>').findall(data)
          for description in matchd:
            desc = description       
-           desc = desc + 'не можах да намеря описание'
          if 'openload' in link:
            addLink2(name,link,8,desc,thumbnail)
          if not 'openload' in link:
@@ -179,6 +181,7 @@ def SHOWSERIAL(url):
 
 #Зареждане на видео
 def PLAY(url):
+        import urlresolver
         li = xbmcgui.ListItem(iconImage=iconimage, thumbnailImage=iconimage, path=url)
         li.setInfo('video', { 'title': name })
         link = url
@@ -198,7 +201,52 @@ def PLAY(url):
         try: _addon.resolve_url(stream_url)
         except: t=''
 
+def remove_dir (path):
+       dirList, flsList = xbmcvfs.listdir(path)
+       for fl in flsList: 
+            xbmcvfs.delete(os.path.join(path, fl))
+       for dr in dirList: 
+            remove_dir(os.path.join(path, dr))
+       xbmcvfs.rmdir(path)
+       
 def PLAYOL(url):
+        if xbmcaddon.Addon().getSetting('subsoload') == 'true': 
+         remove_dir(xbmc.translatePath('special://temp/envy'))
+         xbmcvfs.mkdir(xbmc.translatePath('special://temp/envy'))
+         from bs4 import BeautifulSoup              
+         subsoload = True
+         req = urllib2.Request(url)
+         req.add_header('User-Agent', UA)
+         response = urllib2.urlopen(req)
+         data=response.read()
+         response.close()
+         soup = BeautifulSoup(data, "html.parser")
+         #print soup
+         for caption in soup.find_all(id="olvideo"):
+            #print caption
+            for link in caption.find_all("track",{"src":True}):
+              print link['src']
+              try:
+               suburl = link['src']
+               print suburl
+               req = urllib2.Request(suburl)
+               req.add_header('User-Agent', UA)
+               response = urllib2.urlopen(req)
+               datasubs = response.read()
+               response.close()
+               #print datasubs
+               file = open(xbmc.translatePath('special://temp/envy/subs.srt'), 'w')
+               file.write(datasubs)
+               file.close()
+               subtitri = xbmc.translatePath('special://temp/envy/subs.srt')         
+               sub = 'true'
+               #xbmcgui.Dialog().notification('Success', 'Успешно заредени субтитри', '1000', __icon__, sound=True) 
+               xbmc.executebuiltin(('Notification(%s,%s,%s,%s)' % ('Success', 'Успешно заредени субтитри', '500', __icon__)))
+              except:
+               sub = 'false'
+               xbmc.executebuiltin(('Notification(%s,%s,%s,%s)' % ('No subs', 'Няма намерени субтитри', '1000', __icon__)))
+        else:
+          subsoload = False      
         match = re.compile('https.+?embed/(.+?)/').findall(url)
         for  link in match:
          link = 'https://api.openload.co/1/streaming/get?file=' + link
@@ -220,9 +268,19 @@ def PLAYOL(url):
           path = jsonrsp['result']['url'].replace('?mime=true','')
           li = xbmcgui.ListItem(iconImage=iconimage, thumbnailImage=iconimage, path=path)
           li.setInfo('video', { 'title': name })
+          if sub=='true':
+           li.setSubtitles([srtsubs_path])
           xbmcplugin.setResolvedUrl(handle=int(sys.argv[1]), succeeded=True, listitem=li)
           try:
-           xbmc.Player().play(path, li)
+            xbmc.Player().play(path, li)
+           #Задаване на субтитри, ако има такива или изключването им
+            if sub=='true':
+                while not xbmc.Player().isPlaying():
+                    xbmc.sleep(5000) #wait until video is being played
+                    xbmc.Player().setSubtitles(srtsubs_path)
+            else:
+                xbmc.Player().showSubtitles(False)
+   
           except:
            xbmc.executebuiltin("Notification('Грешка','Видеото липсва на сървъра!')")
 
