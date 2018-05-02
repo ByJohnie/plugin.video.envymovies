@@ -244,9 +244,10 @@ def PLAYOL(url):
                xbmc.executebuiltin(('Notification(%s,%s,%s,%s)' % ('Success', 'Успешно заредени субтитри', '500', __icon__)))
               except:
                sub = 'false'
-               xbmc.executebuiltin(('Notification(%s,%s,%s,%s)' % ('No subs', 'Няма намерени субтитри', '1000', __icon__)))
+               #xbmc.executebuiltin(('Notification(%s,%s,%s,%s)' % ('No subs', 'Няма намерени субтитри', '1000', __icon__)))
         else:
-          subsoload = False      
+          subsoload = False
+          sub = 'false'
         match = re.compile('https.+?embed/(.+?)/').findall(url)
         for  link in match:
          link = 'https://api.openload.co/1/streaming/get?file=' + link
@@ -268,8 +269,10 @@ def PLAYOL(url):
           path = jsonrsp['result']['url'].replace('?mime=true','')
           li = xbmcgui.ListItem(iconImage=iconimage, thumbnailImage=iconimage, path=path)
           li.setInfo('video', { 'title': name })
-          if sub=='true':
-           li.setSubtitles([srtsubs_path])
+          #if sub=='true':
+           #li.setSubtitles([srtsubs_path])
+          #else:
+           #sub=='false'     
           xbmcplugin.setResolvedUrl(handle=int(sys.argv[1]), succeeded=True, listitem=li)
           try:
             xbmc.Player().play(path, li)
