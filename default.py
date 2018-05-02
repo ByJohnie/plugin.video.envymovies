@@ -64,11 +64,10 @@ def INDEXPAGES(url):
 
         #Начало на обхождането
         br = 0 #Брояч на видеата в страницата - 24 за този сайт
-        match = re.compile('div data-movie-id=".+?".title="(.+?)".+?href="(https.+?)".+?src="(.+?)"').findall(data)
-        for title,vid,thumbnail in match:
-            #print thumbnail
-            #print title
-            addLink(title,vid,5,thumbnail)
+        match = re.compile('div data-movie-id=".+?".title="(.+?)".+?href="(https.+?)".+?src="(.+?)".+?jb-bot">(.+?)</span>.+?jb-bot">(.+?)<.+?tag">(.+?)<').findall(data)
+        for title,vid,thumbnail,kachestvo,vremetraene,godina in match:
+            desc = 'Качество: ' + kachestvo + ' Времетраене: ' + vremetraene + ' Година: ' +godina    
+            addLink(title,vid,5,desc,thumbnail)
             br = br + 1
             #print 'Items counter: ' + str(br)
         if br >= 40: #тогава имаме следваща страница и конструираме нейния адрес
@@ -97,7 +96,7 @@ def INDEXSERIALS(url):
         for vid,thumbnail,title in match:
             #print thumbnail
             #print title
-            addLink(title,vid,4,thumbnail)
+            addLink(title,vid,4,'',thumbnail)
             br = br + 1
             
 def INDEXSERIES(url):
@@ -115,7 +114,7 @@ def INDEXSERIES(url):
          title = name + '  ' + title
             #print thumbnail
             #print title
-         addLink(title,url,6,thumbnail)
+         addLink(title,url,6,'',thumbnail)
         br = br + 1
 
 #Търсачка
@@ -137,12 +136,20 @@ def SEARCH(url):
             response.close()
             match = re.compile('href="(.+?)".*\n.*src="(.+?)" title="(.+?)"').findall(data)
             for vid,thumbnail,title in match:
-             addLink(title,vid,5,thumbnail)
+             addLink(title,vid,5,'',thumbnail)
 
         else:
              addDir('Върнете се назад в главното меню за да продължите','','',"DefaultFolderBack.png")
-
+def remove_dir (path):
+       dirList, flsList = xbmcvfs.listdir(path)
+       for fl in flsList: 
+            xbmcvfs.delete(os.path.join(path, fl))
+       for dr in dirList: 
+            remove_dir(os.path.join(path, dr))
+       xbmcvfs.rmdir(path)
+       
 def SHOW(url):
+       remove_dir(xbmc.translatePath('special://temp/envy')) 
        req = urllib2.Request(url)
        req.add_header('User-Agent', UA)
        response = urllib2.urlopen(req)
@@ -155,14 +162,14 @@ def SHOW(url):
          desc = ''
          matchd = re.compile('class="film-desc.+?<p class="f-desc.+?>(.+?)</p>').findall(data)
          for description in matchd:
-           desc = description       
+           desc = description.replace('&#8211;','')       
          if 'openload' in link:
            addLink2(name,link,8,desc,thumbnail)
          if not 'openload' in link:
            addLink2(name,link,7,desc,thumbnail)
 
 def SHOWSERIAL(url):
-       url1 = url
+       remove_dir(xbmc.translatePath('special://temp/envy'))
        req = urllib2.Request(url)
        req.add_header('User-Agent', UA)
        response = urllib2.urlopen(req)
@@ -170,10 +177,10 @@ def SHOWSERIAL(url):
        response.close()
        match = re.compile('class="movieplay">.+?data-lazy-src="(.+?)" width="100%"').findall(data)
        for link in match:
-        matchi = re.compile('meta property="og:image" content="(.+?)"').findall(data)
-        for thumbnail in matchi:
+         thumbnail = 'DefaultVideo.png'
          matchd = re.compile('class="film-desc.+?<p class="f-desc.+?>(.+?)</p>').findall(data)
          for desc in matchd:
+          desc = desc.replace('&#8211;','')        
           if 'openload' in link:
            addLink2(name,link,8,desc,thumbnail)
           if not 'openload' in link:
@@ -201,13 +208,7 @@ def PLAY(url):
         try: _addon.resolve_url(stream_url)
         except: t=''
 
-def remove_dir (path):
-       dirList, flsList = xbmcvfs.listdir(path)
-       for fl in flsList: 
-            xbmcvfs.delete(os.path.join(path, fl))
-       for dr in dirList: 
-            remove_dir(os.path.join(path, dr))
-       xbmcvfs.rmdir(path)
+
        
 def PLAYOL(url):
         if xbmcaddon.Addon().getSetting('subsoload') == 'true': 
@@ -238,13 +239,8 @@ def PLAYOL(url):
                file = open(xbmc.translatePath('special://temp/envy/subs.srt'), 'w')
                file.write(datasubs)
                file.close()
-               subtitri = xbmc.translatePath('special://temp/envy/subs.srt')         
-               sub = 'true'
-               #xbmcgui.Dialog().notification('Success', 'Успешно заредени субтитри', '1000', __icon__, sound=True) 
-               xbmc.executebuiltin(('Notification(%s,%s,%s,%s)' % ('Success', 'Успешно заредени субтитри', '500', __icon__)))
               except:
                sub = 'false'
-               #xbmc.executebuiltin(('Notification(%s,%s,%s,%s)' % ('No subs', 'Няма намерени субтитри', '1000', __icon__)))
         else:
           subsoload = False
           sub = 'false'
@@ -275,11 +271,18 @@ def PLAYOL(url):
            #sub=='false'     
           xbmcplugin.setResolvedUrl(handle=int(sys.argv[1]), succeeded=True, listitem=li)
           try:
+            if os.path.exists(xbmc.translatePath('special://temp/envy/subs.srt')):   
+                  print "Намерени субтитри!"         
+                  sub = 'true'
+                  xbmc.executebuiltin(('Notification(%s,%s,%s,%s)' % ('Success', 'Успешно заредени субтитри', '500', __icon__)))
+            else:
+                  print "Не са открити субтитри!"
+                  sub = 'false'      
             xbmc.Player().play(path, li)
            #Задаване на субтитри, ако има такива или изключването им
             if sub=='true':
                 while not xbmc.Player().isPlaying():
-                    xbmc.sleep(5000) #wait until video is being played
+                    xbmc.sleep(1000) #wait until video is being played
                     xbmc.Player().setSubtitles(srtsubs_path)
             else:
                 xbmc.Player().showSubtitles(False)
@@ -297,12 +300,12 @@ def RANDOMMOVIE(url):
 
 
 #Модул за добавяне на отделно заглавие и неговите атрибути към съдържанието на показваната в Kodi директория - НЯМА НУЖДА ДА ПРОМЕНЯТЕ НИЩО ТУК
-def addLink(name,url,mode,iconimage):
+def addLink(name,url,mode,plot,iconimage):
         u=sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+str(mode)+"&name="+urllib.quote_plus(name)
         ok=True
         liz=xbmcgui.ListItem(name, iconImage=iconimage, thumbnailImage=iconimage)
         liz.setArt({ 'thumb': iconimage,'poster': iconimage, 'banner' : iconimage, 'fanart': iconimage })
-        liz.setInfo( type="Video", infoLabels={ "Title": name } )
+        liz.setInfo( type="Video", infoLabels={ "Title": name, "plot": plot } )
         liz.setProperty("IsPlayable" , "true")
         ok=xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]),url=u,listitem=liz,isFolder=True)
         return ok
