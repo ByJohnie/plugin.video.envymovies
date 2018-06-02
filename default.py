@@ -30,7 +30,7 @@ def CATEGORIES():
         addDir('Търсене на видео','https://envymovies.com/?s=',2,searchicon)
         addDir('Случаен филм','https://envymovies.com/?redirect_to=random',1,folder)
         addDir('Всички филми','https://envymovies.com/movies/',1,folder)
-        addDir('Сериали','https://envymovies.com/series/',3,series)
+        addDir('Сериали','https://envymovies.com/tv/',3,series)
         addDir('Анимация','https://envymovies.com/genre/animation/',1,folder)
         addDir('Документален','https://envymovies.com/genre/documentary/',1,folder)
         addDir('Исторически','https://envymovies.com/genre/history/',1,folder)
@@ -155,17 +155,22 @@ def SHOW(url):
        response = urllib2.urlopen(req)
        data=response.read()
        response.close()
-       match = re.compile('class="movieplay">.+?data-lazy-src="(.+?embed/.+?)" width="100%"').findall(data)
-       for link in match:
-        matchi = re.compile('style="background-image:.+?(https:.+?.jpg)').findall(data)
-        for thumbnail in matchi:
-         desc = ''
-         matchd = re.compile('class="film-desc.+?<p class="f-desc.+?>(.+?)</p>').findall(data)
-         for description in matchd:
-           desc = description.replace('&#8211;','')       
-         if 'openload' in link:
+       matchi = re.compile('style="background-image:.+?(https:.+?.jpg)').findall(data)
+       matchd = re.compile('class="film-desc.+?<p class="f-desc.+?>(.+?)</p>').findall(data)
+       for thumbnail in matchi:
+        for description in matchd:
+         desc = description.replace('&#8211;','').replace('&#8222;','').replace('&#8220;','')
+         url = url + 'watch'
+         req = urllib2.Request(url)
+         req.add_header('User-Agent', UA)
+         response = urllib2.urlopen(req)
+         data=response.read()
+         response.close()
+         match = re.compile('class="movieplay">.+?data-lazy-src="(.+?embed/.+?)" width="100%"').findall(data)
+         for link in match:     
+          if 'openload' in link:
            addLink2(name,link,8,desc,thumbnail)
-         if not 'openload' in link:
+          if not 'openload' in link:
            addLink2(name,link,7,desc,thumbnail)
 
 def SHOWSERIAL(url):
